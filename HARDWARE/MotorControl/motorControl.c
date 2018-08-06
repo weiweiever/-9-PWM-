@@ -318,9 +318,10 @@ void TIM7_IRQHandler(void)
 		last_cnt2=cnt2;
 		last_cnt3=cnt3;
 			
-		PIDcalc(PID1,V1);
-		PIDcalc(PID2,V2);
-		PIDcalc(PID3,V3);
+			
+		TIM_SetCompare1(TIM14,PIDcalc(PID1,V1));	//修改比较值，修改占空比
+		TIM_SetCompare1(TIM13,PIDcalc(PID2,V2));	//修改比较值，修改占空比
+		TIM_SetCompare1(TIM12,PIDcalc(PID3,V3));
 	}
 	TIM_ClearITPendingBit(TIM7,TIM_IT_Update);  //清除中断标志位
 }
@@ -357,6 +358,14 @@ void PID_Init(float Kp,float Ki,float Kd){
 void set_motor_speed(int motor,int speed){		//速度和占空比如何转换？？？待完善
 	if(speed==0)
 		motor_stop(motor);
+	switch(motor){
+		case motor1:
+			PID_setTarget(PID1,speed);break;
+		case motor2:
+			PID_setTarget(PID2,speed);break;
+		case motor3:
+			PID_setTarget(PID3,speed);break;
+	}
 }
 
 void motor_stop(int motor){		//清零PID 引脚控制刹车
@@ -371,6 +380,7 @@ void motor_stop(int motor){		//清零PID 引脚控制刹车
 	PID_setTarget(PID3,0);
 }
 
+//设置小车方向
 void set_Car_Direction(carDirectionType drct){
 	switch(drct){
 		case ahead: PEout(8) =1;
@@ -380,15 +390,7 @@ void set_Car_Direction(carDirectionType drct){
 								PEout(12)=1;
 								PEout(13)=0;
 			break;
-		case back:	PEout(8)=1;
-								PEout(9)=1;
-								PEout(10)=1;
-								PEout(11)=0;
-								PEout(12)=0;
-								PEout(13)=1;
-			break;
-		case left:	PEout(8)=1;
-								PEout(9)=1;
+		case back:	PEout(8)=1;1
 								PEout(10)=0;
 								PEout(11)=1;
 								PEout(12)=1;

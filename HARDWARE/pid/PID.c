@@ -6,11 +6,7 @@ void PIDxInit(PIDtypedef* PIDx)
  PIDx->sum_error=0;
  PIDx->last_error=0;
  PIDx->prev_error=0;
- PIDx->Kp=0;
- PIDx->Ki=0;
- PIDx->Kd=0;
  PIDx->target=0;
-
 }
  void PID_setTarget(PIDtypedef* PIDx,u16 setvalue)
  {

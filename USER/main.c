@@ -4,6 +4,7 @@
 #include "led.h"
 #include "motorControl.h"
 #include "Ultrasound.h"
+#include "PID.h"
 #include "stm32f4xx.h"
 
 //ALIENTEK 探索者STM32F407开发板 实验9
@@ -19,7 +20,8 @@ extern u8  TIM10CH1_CAPTURE_STA;
 extern u32	TIM10CH1_CAPTURE_VAL;
 
 
-long long temp;
+
+long long temp1,temp2;
 
 		
 int main(void)
@@ -42,10 +44,11 @@ int main(void)
 	TIM_SetCompare1(TIM14,250);	//修改比较值，修改占空比
 	TIM_SetCompare1(TIM13,250);	//修改比较值，修改占空比
 	TIM_SetCompare1(TIM12,250);
-
+	
+	PID_Init(0.08,0.1,0.1);
    while(1) 
 	{
-		Trig1=0;
+		Trig1=0;				·
 		Trig2=0;
  		delay_ms(10);	 
 		Trig1=1;
@@ -56,27 +59,24 @@ int main(void)
 		
 		if(TIM9CH1_CAPTURE_STA&0X80)        //成功捕获到了一次高电平
 			{
-				temp=TIM9CH1_CAPTURE_STA&0X3F; 
-				temp*=0XFFFFFFFF;		 		         //溢出时间总和
-				temp+=TIM9CH1_CAPTURE_VAL;		   //得到总的高电平时间
-				printf("1HIGH:%lld us",temp); //打印总的高点平时间
+				temp1=TIM9CH1_CAPTURE_STA&0X3F; 
+				temp1*=0XFFFFFFFF;		 		         //溢出时间总和
+				temp1+=TIM9CH1_CAPTURE_VAL;		   //得到总的高电平时间
+				printf("1HIGH:%lld us",temp1); //打印总的高点平时间
 				TIM9CH1_CAPTURE_STA=0;			     //开启下一次捕获
 
 			}
 		if(TIM10CH1_CAPTURE_STA&0X80)        //成功捕获到了一次高电平
 			{
-				temp=TIM10CH1_CAPTURE_STA&0X3F; 
-				temp*=0XFFFFFFFF;		 		         //溢出时间总和
-				temp+=TIM10CH1_CAPTURE_VAL;		   //得到总的高电平时间
-				printf("2HIGH:%lld us\r\n",temp); //打印总的高点平时间
+				temp2=TIM10CH1_CAPTURE_STA&0X3F; 
+				temp2*=0XFFFFFFFF;		 		         //溢出时间总和
+				temp2+=TIM10CH1_CAPTURE_VAL;		   //得到总的高电平时间
+				printf("2HIGH:%lld us\r\n",temp2); //打印总的高点平时间
 				TIM10CH1_CAPTURE_STA=0;			     //开启下一次捕获
-
 			}
-		
-		cnt3 = TIM3 -> CNT;
-		cnt4 = TIM4 -> CNT;
-		cnt5 = TIM5 -> CNT;
-		printf("%5d  %5d  %5d\r\n",cnt3,cnt4,cnt5);
+		if(temp1<8000 || temp2<8000){		//运动控制
+			
+		}
 	}
 }
 

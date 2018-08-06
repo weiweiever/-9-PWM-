@@ -1,5 +1,5 @@
 暑假机器人（避障车）：
-	3路PWM输出：	
+	3路电机PWM输出：	
 				1.PA7  TIM14 CH1
 				2.PA6  TIM13 CH1
 				3.PB14 TIM12 CH1
