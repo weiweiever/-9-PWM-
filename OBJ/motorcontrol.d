@@ -36,3 +36,4 @@
 ..\obj\motorcontrol.o: ..\FWLIB\inc\stm32f4xx_dac.h
 ..\obj\motorcontrol.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\motorcontrol.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
+..\obj\motorcontrol.o: ..\HARDWARE\pid\PID.h

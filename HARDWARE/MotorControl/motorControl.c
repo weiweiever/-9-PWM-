@@ -5,7 +5,7 @@ u16 last_cnt1=0,last_cnt2=0,last_cnt3=0;
 u16 cnt1=0,cnt2=0,cnt3=0; 
 s32 V1,V2,V3;
 
-PIDtypedef PID1,PID2,PID3;	//PID
+PIDtypedef* PID1,*PID2,*PID3;	//PID
 
 void TIM14_PWM_Init(u32 arr,u32 psc)
 {		 					 
@@ -23,7 +23,7 @@ void TIM14_PWM_Init(u32 arr,u32 psc)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;           //GPIOA7
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;        //复用功能
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//速度100MHz
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;      //推挽复用输出
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;      //推挽复用输出
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;        //上拉
 	GPIO_Init(GPIOA,&GPIO_InitStructure);              //初始化PF9
 	  
@@ -65,7 +65,7 @@ void TIM13_PWM_Init(u32 arr,u32 psc)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;           //GPIOA6
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;        //复用功能
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//速度100MHz
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;      //推挽复用输出
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;      //推挽复用输出
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;        //上拉
 	GPIO_Init(GPIOA,&GPIO_InitStructure);              //初始化PA6
 	  
@@ -107,7 +107,7 @@ void TIM12_PWM_Init(u32 arr,u32 psc)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;           //GPIOB14
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;        //复用功能
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//速度100MHz
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;      //推挽复用输出
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;      //推挽复用输出
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;        //上拉
 	GPIO_Init(GPIOB,&GPIO_InitStructure);              //初始化PB14
 	  
@@ -318,10 +318,11 @@ void TIM7_IRQHandler(void)
 		last_cnt2=cnt2;
 		last_cnt3=cnt3;
 			
-			
+		/*	
 		TIM_SetCompare1(TIM14,PIDcalc(PID1,V1));	//修改比较值，修改占空比
 		TIM_SetCompare1(TIM13,PIDcalc(PID2,V2));	//修改比较值，修改占空比
 		TIM_SetCompare1(TIM12,PIDcalc(PID3,V3));
+			*/
 	}
 	TIM_ClearITPendingBit(TIM7,TIM_IT_Update);  //清除中断标志位
 }
@@ -335,16 +336,16 @@ void motor_Direction_Pin_Init(){
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9 |GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13;           //GPIOE8-13
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;        
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//速度100MHz
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;      //推兔输出
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;      //开漏输出
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;        //上拉
 	GPIO_Init(GPIOE,&GPIO_InitStructure);              //初始化PE
 	
-	PEout(8)=1;
-	PEout(9)=1;
-	PEout(10)=1;
-	PEout(11)=1;
-	PEout(12)=1;
-	PEout(13)=1;
+	PEout(8) =0;
+	PEout(9) =0;
+	PEout(10)=0;
+	PEout(11)=0;
+	PEout(12)=0;
+	PEout(13)=0;
 }
 
 //初始化PID参数
@@ -369,12 +370,12 @@ void set_motor_speed(int motor,int speed){		//速度和占空比如何转换？？？待完善
 }
 
 void motor_stop(int motor){		//清零PID 引脚控制刹车
-	PEout(8) =1;
-	PEout(9) =1;
-	PEout(10)=1;
-	PEout(11)=1;
-	PEout(12)=1;
-	PEout(13)=1;
+	PEout(8) =0;
+	PEout(9) =0;
+	PEout(10)=0;
+	PEout(11)=0;
+	PEout(12)=0;
+	PEout(13)=0;
 	PID_setTarget(PID1,0);
 	PID_setTarget(PID2,0);
 	PID_setTarget(PID3,0);
@@ -383,25 +384,45 @@ void motor_stop(int motor){		//清零PID 引脚控制刹车
 //设置小车方向
 void set_Car_Direction(carDirectionType drct){
 	switch(drct){
-		case ahead: PEout(8) =1;
+		case ahead: PEout(8) =0;	//ok
+								PEout(9) =0;
+								PEout(10)=0;
+								PEout(11)=1;
+								PEout(12)=0;
+								PEout(13)=1;
+				TIM_SetCompare1(TIM14,150);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM13,58);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM12,50);	
+			break;
+		case back:	PEout(8) =0;
+								PEout(9) =0;
+								PEout(10)=1;
+								PEout(11)=0;
+								PEout(12)=1;
+								PEout(13)=0;
+				TIM_SetCompare1(TIM14,350);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM13,58);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM12,50);	
+			break;
+		case left:	PEout(8) =1;	//ok
+								PEout(9) =0;
+								PEout(10)=1;
+								PEout(11)=0;
+								PEout(12)=0;
+								PEout(13)=1;
+				TIM_SetCompare1(TIM14,200);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM13,215);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM12,287);	
+			break;
+		case right:	PEout(8) =0;	//perfect
 								PEout(9) =1;
 								PEout(10)=0;
 								PEout(11)=1;
 								PEout(12)=1;
 								PEout(13)=0;
-			break;
-		case back:	PEout(8)=1;1
-								PEout(10)=0;
-								PEout(11)=1;
-								PEout(12)=1;
-								PEout(13)=0;
-			break;
-		case right:	PEout(8)=1;
-								PEout(9)=1;
-								PEout(10)=0;
-								PEout(11)=1;
-								PEout(12)=1;
-								PEout(13)=0;
+				TIM_SetCompare1(TIM14,190);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM13,320);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM12,220);	
 			break;
 	}
 }

@@ -178,7 +178,7 @@ void TIM1_UP_TIM10_IRQHandler(void)
 		TIM_ClearITPendingBit(TIM10, TIM_IT_CC1|TIM_IT_Update); //清除中断标志位
 }
 
-void Ultrasound_trig_Init(){
+void Ultrasound_trig_Init(void){
 	GPIO_InitTypeDef GPIO_InitStructure;
  
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE); 	//使能PORTE时钟	
@@ -186,8 +186,8 @@ void Ultrasound_trig_Init(){
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3; //GPIOE
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//复用功能
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//速度100MHz
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; //推挽复用输出
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN; //下拉
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_OD; //推挽复用输出
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP; //下拉
 	GPIO_Init(GPIOE,&GPIO_InitStructure); //初始化PE5
 
 	GPIO_ResetBits(GPIOE,GPIO_Pin_2 | GPIO_Pin_3);
