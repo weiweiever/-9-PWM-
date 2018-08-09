@@ -33,10 +33,11 @@ void TIM4_encoder_Init(void);
 void TIM3_encoder_Init(void);
 void TIM5_encoder_Init(void);
 
-void TIM7_Int_Init(u16 arr,u16 psc);
 
+
+void motor_Direction_Pin_Init(void);
 void PID_Init(float Kp,float Ki,float Kd);
 void set_motor_speed(int motor,int speed);
-void motor_stop(int motor);
+void car_Stop(void);
 void set_Car_Direction(carDirectionType drct);
 #endif

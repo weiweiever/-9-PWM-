@@ -1,9 +1,7 @@
 #include "motorControl.h"
 #include "PID.h"
 
-u16 last_cnt1=0,last_cnt2=0,last_cnt3=0;
-u16 cnt1=0,cnt2=0,cnt3=0; 
-s32 V1,V2,V3;
+
 
 PIDtypedef* PID1,*PID2,*PID3;	//PID
 
@@ -258,77 +256,10 @@ void TIM5_encoder_Init(void)
 										  
 }  
 
-//定时中断
-void TIM7_Int_Init(u16 arr,u16 psc)
-{
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
-	NVIC_InitTypeDef NVIC_InitStructure;
-	
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM7,ENABLE);  ///使能TIM7时钟
-	
-  TIM_TimeBaseInitStructure.TIM_Period = arr; 	//自动重装载值
-	TIM_TimeBaseInitStructure.TIM_Prescaler=psc;  //定时器分频
-	TIM_TimeBaseInitStructure.TIM_CounterMode=TIM_CounterMode_Up; //向上计数模式
-	TIM_TimeBaseInitStructure.TIM_ClockDivision=TIM_CKD_DIV1; 
-	
-	TIM_TimeBaseInit(TIM7,&TIM_TimeBaseInitStructure);//初始化TIM3
-	
-	TIM_ITConfig(TIM7,TIM_IT_Update,ENABLE); //允许定时器7更新中断
-	TIM_Cmd(TIM7,ENABLE); //使能定时器7
-	
-	NVIC_InitStructure.NVIC_IRQChannel = TIM7_IRQn; //定时器7中断
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0x01; //抢占优先级1
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority=0x03; //子优先级3
-	NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
-	
-}
 
-//定时器7中断服务函数
-void TIM7_IRQHandler(void)
-{
-	if(TIM_GetITStatus(TIM7,TIM_IT_Update)==SET) //溢出中断
-	{
-		cnt1=TIM3->CNT;
-		cnt2=TIM4->CNT;
-		cnt3=TIM5->CNT;
-		
-		if(cnt1-last_cnt1>1000)
-			V1=cnt1-last_cnt1-10000;
-		else if(last_cnt1-cnt1>1000)
-				V1=1000-last_cnt1+cnt1;
-			else
-				V1=cnt1-last_cnt1;
-					
-		if(cnt2-last_cnt2>1000)
-			V1=cnt2-last_cnt2-10000;
-		else if(last_cnt2-cnt2>1000)
-				V2=1000-last_cnt2+cnt2;
-			else
-				V2=cnt2-last_cnt2;
-			
-		if(cnt3-last_cnt3>1000)
-			V3=cnt3-last_cnt3-10000;
-		else if(last_cnt3-cnt3>1000)
-				V3=1000-last_cnt3+cnt3;
-			else
-				V3=cnt3-last_cnt3;
-		
-		last_cnt1=cnt1;
-		last_cnt2=cnt2;
-		last_cnt3=cnt3;
-			
-		/*	
-		TIM_SetCompare1(TIM14,PIDcalc(PID1,V1));	//修改比较值，修改占空比
-		TIM_SetCompare1(TIM13,PIDcalc(PID2,V2));	//修改比较值，修改占空比
-		TIM_SetCompare1(TIM12,PIDcalc(PID3,V3));
-			*/
-	}
-	TIM_ClearITPendingBit(TIM7,TIM_IT_Update);  //清除中断标志位
-}
 
 //电机转动方向控制引脚
-void motor_Direction_Pin_Init(){
+void motor_Direction_Pin_Init(void){
 	GPIO_InitTypeDef GPIO_InitStructure;
  
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE); 	//使能PORTE时钟
@@ -356,9 +287,9 @@ void PID_Init(float Kp,float Ki,float Kd){
 }
 
 //控制电机速度
-void set_motor_speed(int motor,int speed){		//速度和占空比如何转换？？？待完善
+void set_motor_speed(int motor,int speed){		//未用到
 	if(speed==0)
-		motor_stop(motor);
+		car_Stop();
 	switch(motor){
 		case motor1:
 			PID_setTarget(PID1,speed);break;
@@ -369,7 +300,7 @@ void set_motor_speed(int motor,int speed){		//速度和占空比如何转换？？？待完善
 	}
 }
 
-void motor_stop(int motor){		//清零PID 引脚控制刹车
+void car_Stop(void){		//清零PID 引脚控制刹车
 	PEout(8) =0;
 	PEout(9) =0;
 	PEout(10)=0;
@@ -391,8 +322,8 @@ void set_Car_Direction(carDirectionType drct){
 								PEout(12)=0;
 								PEout(13)=1;
 				TIM_SetCompare1(TIM14,150);	//修改比较值，修改占空比
-				TIM_SetCompare1(TIM13,58);	//修改比较值，修改占空比
-				TIM_SetCompare1(TIM12,50);	
+				TIM_SetCompare1(TIM13,62);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM12,60);	
 			break;
 		case back:	PEout(8) =0;
 								PEout(9) =0;
@@ -400,9 +331,9 @@ void set_Car_Direction(carDirectionType drct){
 								PEout(11)=0;
 								PEout(12)=1;
 								PEout(13)=0;
-				TIM_SetCompare1(TIM14,350);	//修改比较值，修改占空比
-				TIM_SetCompare1(TIM13,58);	//修改比较值，修改占空比
-				TIM_SetCompare1(TIM12,50);	
+				TIM_SetCompare1(TIM14,150);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM13,60);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM12,62);	
 			break;
 		case left:	PEout(8) =1;	//ok
 								PEout(9) =0;
@@ -410,9 +341,9 @@ void set_Car_Direction(carDirectionType drct){
 								PEout(11)=0;
 								PEout(12)=0;
 								PEout(13)=1;
-				TIM_SetCompare1(TIM14,200);	//修改比较值，修改占空比
-				TIM_SetCompare1(TIM13,215);	//修改比较值，修改占空比
-				TIM_SetCompare1(TIM12,287);	
+				TIM_SetCompare1(TIM14,120);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM13,230);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM12,230);	
 			break;
 		case right:	PEout(8) =0;	//perfect
 								PEout(9) =1;
@@ -420,9 +351,9 @@ void set_Car_Direction(carDirectionType drct){
 								PEout(11)=1;
 								PEout(12)=1;
 								PEout(13)=0;
-				TIM_SetCompare1(TIM14,190);	//修改比较值，修改占空比
-				TIM_SetCompare1(TIM13,320);	//修改比较值，修改占空比
-				TIM_SetCompare1(TIM12,220);	
+				TIM_SetCompare1(TIM14,85);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM13,240);	//修改比较值，修改占空比
+				TIM_SetCompare1(TIM12,240);	
 			break;
 	}
 }

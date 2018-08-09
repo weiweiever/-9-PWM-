@@ -4,26 +4,12 @@
 #include "led.h"
 #include "motorControl.h"
 #include "Ultrasound.h"
+#include "Timer.h"
 #include "stm32f4xx.h"
 
-//ALIENTEK 探索者STM32F407开发板 实验9
-//PWM输出实验-库函数版本
-//技术支持：www.openedv.com
-//淘宝店铺：http://eboard.taobao.com  
-//广州市星翼电子科技有限公司  
-//作者：正点原子 @ALIENTEK
-extern u8  TIM9CH1_CAPTURE_STA;	//输入捕获状态		    				
-extern u32	TIM9CH1_CAPTURE_VAL;	//输入捕获值(TIM2/TIM5是32位)
-extern u8  TIM10CH1_CAPTURE_STA;		    				
-extern u32	TIM10CH1_CAPTURE_VAL;
-
-
-
-//long long temp1,temp2;
-
+extern long long dis1,dis2;	//记录上一次测到的距离
 		
-int main(void)
-{ 
+int main(void){ 
 	
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置系统中断优先级分组2
 	delay_init(168);  //初始化延时函数
@@ -39,43 +25,67 @@ int main(void)
 	TIM7_Int_Init(5000,84-1);	//5ms中断
 	Ultrasound_trig_Init();
 	motor_Direction_Pin_Init();
-	
-	
-	
 	//PID_Init(0.08,0.1,0.1);
-   while(1) 
-	{
-		set_Car_Direction(right);
-		/*
-		Trig1=0;				·
-		Trig2=0;
- 		delay_ms(10);	 
-		Trig1=1;
-		Trig2=1;
-		delay_us(15);
-		Trig1=0;
-		Trig2=0;
+	
+	Trig1=0;
+	Trig2=0;
+	
+	set_Car_Direction(ahead);
+	
+	while(1){
+		if(dis1==0||dis2==0) continue;
+		if(dis1<5000 && dis2<5000){
+			delay_ms(5);
+			if(dis1<7000 && dis2<7000){
+				car_Stop();
+				delay_ms(400);
+				set_Car_Direction(right);
+				while(dis1<7000)
+					delay_ms(3);
+				delay_ms(100);
+				car_Stop();
+				delay_ms(400);
+			}
+		}
 		
-		if(TIM9CH1_CAPTURE_STA&0X80)        //成功捕获到了一次高电平
-			{
-				temp1=TIM9CH1_CAPTURE_STA&0X3F; 
-				temp1*=0XFFFFFFFF;		 		         //溢出时间总和
-				temp1+=TIM9CH1_CAPTURE_VAL;		   //得到总的高电平时间
-				printf("1HIGH:%lld us",temp1); //打印总的高点平时间
-				TIM9CH1_CAPTURE_STA=0;			     //开启下一次捕获
+		if(dis1<5000 && dis2>5000){
+			delay_ms(5);
+			if(dis1<7000 && dis2>3000){
+				car_Stop();
+				delay_ms(400);
+				set_Car_Direction(right);
+				while(dis1<7000)
+					delay_ms(3);
+				delay_ms(100);
+				car_Stop();
+				delay_ms(400);
+			}
+		}
+		
+		if(dis1>5000 && dis2<5000){
+			delay_ms(5);
+			if(dis1>3000 && dis2<7000){
+				car_Stop();
+				delay_ms(400);
+				set_Car_Direction(left);
+				while(dis2<7000)
+					delay_ms(3);
+				delay_ms(100);
+				car_Stop();
+				delay_ms(400);
+			}
+		}
+		
+		if(dis1>5000 && dis2>5000){
+			delay_ms(5);
+			if(dis1>3000 && dis2>3000){
+				car_Stop();
+				delay_ms(400);
+				set_Car_Direction(ahead);
+				
+			}
+		}
 
-			}
-		if(TIM10CH1_CAPTURE_STA&0X80)        //成功捕获到了一次高电平
-			{
-				temp2=TIM10CH1_CAPTURE_STA&0X3F; 
-				temp2*=0XFFFFFFFF;		 		         //溢出时间总和
-				temp2+=TIM10CH1_CAPTURE_VAL;		   //得到总的高电平时间
-				printf("2HIGH:%lld us\r\n",temp2); //打印总的高点平时间
-				TIM10CH1_CAPTURE_STA=0;			     //开启下一次捕获
-			}
-		if(temp1<8000 || temp2<8000){		//运动控制
-			
-		}*/
 	}
 }
 

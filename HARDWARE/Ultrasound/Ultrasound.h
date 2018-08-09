@@ -3,6 +3,7 @@
 
 #include "sys.h"
 
+
 #define Trig1 PEout(2)	
 #define Trig2 PEout(3)
 

@@ -1,4 +1,5 @@
 #include "Ultrasound.h"
+#include "usart.h"
 
 void TIM9_Ultrasound_cap_Init(u32 arr,u16 psc){
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -100,30 +101,41 @@ u32	TIM9CH1_CAPTURE_VAL=0;	//输入捕获值(TIM2/TIM5是32位)
 u8  TIM10CH1_CAPTURE_STA=0;		    				
 u32	TIM10CH1_CAPTURE_VAL=0;	
 
+long long dis1=10000,dis2=10000;		//记录上一次测到的距离
+
 //定时器9中断服务程序	 
 void TIM1_BRK_TIM9_IRQHandler(void)
-{ 		    
+{ 	
 		if((TIM9CH1_CAPTURE_STA&0X80)==0)//还未成功捕获	
 		{
 			if(TIM_GetITStatus(TIM9, TIM_IT_Update) != RESET)//溢出
 			{	     
 				if(TIM9CH1_CAPTURE_STA&0X40)//已经捕获到高电平了
 				{
-					if((TIM9CH1_CAPTURE_STA&0X3F)==0X3F)//高电平太长了
+					if((TIM9CH1_CAPTURE_STA&0X3F)==0X1F)//高电平太长了		
 					{
 						TIM9CH1_CAPTURE_STA|=0X80;		//标记成功捕获了一次
 						TIM9CH1_CAPTURE_VAL=0XFFFFFFFF;
-						
+						dis1=0X1F; 
+						dis1*=0XFFFFFFFF;		 		         //溢出时间总和
+						dis1+=TIM9CH1_CAPTURE_VAL;
+						TIM9CH1_CAPTURE_STA=0;
+						TIM9CH1_CAPTURE_VAL=0;
 					}else TIM9CH1_CAPTURE_STA++;
 				}	 
 			}
 			if(TIM_GetITStatus(TIM9, TIM_IT_CC1) != RESET)//捕获1发生捕获事件
 			{	
 				if(TIM9CH1_CAPTURE_STA&0X40)		//捕获到一个下降沿 		
-				{	  			
+				{
 					TIM9CH1_CAPTURE_STA|=0X80;		//标记成功捕获到一次高电平脉宽
 					TIM9CH1_CAPTURE_VAL=TIM_GetCapture1(TIM9);//获取当前的捕获值.
 					TIM_OC1PolarityConfig(TIM9,TIM_ICPolarity_Rising); //CC1P=0 设置为上升沿捕获
+					dis1=TIM9CH1_CAPTURE_STA&0X3F; 
+					dis1*=0XFFFFFFFF;		 		         //溢出时间总和
+					dis1+=TIM9CH1_CAPTURE_VAL;
+					TIM9CH1_CAPTURE_STA=0;
+					TIM9CH1_CAPTURE_VAL=0;
 				}else  								//还未开始,第一次捕获上升沿
 				{
 					TIM9CH1_CAPTURE_STA=0;			//清空
@@ -148,11 +160,15 @@ void TIM1_UP_TIM10_IRQHandler(void)
 			{	     
 				if(TIM10CH1_CAPTURE_STA&0X40)//已经捕获到高电平了
 				{
-					if((TIM10CH1_CAPTURE_STA&0X3F)==0X3F)//高电平太长了
+					if((TIM10CH1_CAPTURE_STA&0X3F)==0X1F)//高电平太长了
 					{
 						TIM10CH1_CAPTURE_STA|=0X80;		//标记成功捕获了一次
 						TIM10CH1_CAPTURE_VAL=0XFFFFFFFF;
-						
+						dis2=0X1F; 
+						dis2*=0XFFFFFFFF;		 		         //溢出时间总和
+						dis2+=TIM10CH1_CAPTURE_VAL;
+						TIM10CH1_CAPTURE_STA=0;
+						TIM10CH1_CAPTURE_VAL=0;
 					}else TIM10CH1_CAPTURE_STA++;
 				}	 
 			}
@@ -163,15 +179,20 @@ void TIM1_UP_TIM10_IRQHandler(void)
 					TIM10CH1_CAPTURE_STA|=0X80;		//标记成功捕获到一次高电平脉宽
 					TIM10CH1_CAPTURE_VAL=TIM_GetCapture1(TIM10);//获取当前的捕获值.
 					TIM_OC1PolarityConfig(TIM10,TIM_ICPolarity_Rising); //CC1P=0 设置为上升沿捕获
+					dis2=TIM10CH1_CAPTURE_STA&0X3F; 
+					dis2*=0XFFFFFFFF;		 		         //溢出时间总和
+					dis2+=TIM10CH1_CAPTURE_VAL;
+					TIM10CH1_CAPTURE_STA=0;
+					TIM10CH1_CAPTURE_VAL=0;
 				}else  								//还未开始,第一次捕获上升沿
 				{
 					TIM10CH1_CAPTURE_STA=0;			//清空
 					TIM10CH1_CAPTURE_VAL=0;
 					TIM10CH1_CAPTURE_STA|=0X40;		//标记捕获到了上升沿
-					TIM_Cmd(TIM10,DISABLE ); 	//关闭定时器9
+					TIM_Cmd(TIM10,DISABLE ); 	//关闭定时器10
 					TIM_SetCounter(TIM10,0);
 					TIM_OC1PolarityConfig(TIM10,TIM_ICPolarity_Falling);		//CC1P=1 设置为下降沿捕获
-					TIM_Cmd(TIM10,ENABLE ); 	//使能定时器9
+					TIM_Cmd(TIM10,ENABLE ); 	//使能定时器10
 				}		    
 			}			     	    					   
 		}
@@ -186,7 +207,7 @@ void Ultrasound_trig_Init(void){
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3; //GPIOE
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//复用功能
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//速度100MHz
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_OD; //推挽复用输出
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; //推挽复用输出
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP; //下拉
 	GPIO_Init(GPIOE,&GPIO_InitStructure); //初始化PE5
 

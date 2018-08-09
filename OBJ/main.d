@@ -41,3 +41,4 @@
 ..\obj\main.o: ..\HARDWARE\LED\led.h
 ..\obj\main.o: ..\HARDWARE\MotorControl\motorControl.h
 ..\obj\main.o: ..\HARDWARE\Ultrasound\Ultrasound.h
+..\obj\main.o: ..\HARDWARE\Timer\Timer.h

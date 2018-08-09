@@ -36,3 +36,5 @@
 ..\obj\ultrasound.o: ..\FWLIB\inc\stm32f4xx_dac.h
 ..\obj\ultrasound.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\ultrasound.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
+..\obj\ultrasound.o: ..\SYSTEM\usart\usart.h
+..\obj\ultrasound.o: E:\develope tools\KEIL\ARM\ARMCC\Bin\..\include\stdio.h
